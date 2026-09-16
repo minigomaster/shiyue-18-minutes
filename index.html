@@ -383,8 +383,8 @@ const FLAG_NAMES={
 // ---------- flow ----------
 function goto(id,silentHistory){
   if(!SCENES[id]){console.error('missing scene',id);return}
-  // battery drain 1 per 3 scenes
-  st.battery=Math.max(0,st.battery-0.4);
+  // natural battery drain — balanced so the longest route (86 scenes) still lands at ~2-3%
+  st.battery=Math.max(0,st.battery-0.15);
   st.scene=id;
   if(!silentHistory)st.history.push(id);
   autosave();
