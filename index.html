@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<title>十八分鐘 · 山月盤｜EIGHTEEN MINUTES</title>
+<style>
+:root{
+  --bg:#0a0e14; --ink:#e8e2d5; --dim:#8b93a1; --gold:#c9a227; --moon:#dfe8f3;
+  --blood:#8e2f2f; --line:rgba(201,162,39,.25); --panel:rgba(10,14,20,.72);
+  --fs:1;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","SimSun",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--serif);
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none; -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+button{touch-action:manipulation}
+#app{position:relative;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column}
+
+/* --- art layer --- */
+#art{position:absolute;inset:0;z-index:0}
+#art .slide{position:absolute;inset:0;background-size:cover;background-position:center;
+  opacity:0;transition:opacity 1.4s ease;transform:scale(1.04)}
+#art .slide.on{opacity:1;transform:scale(1);transition:opacity 1.8s ease,transform 14s linear}
+#art::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(10,14,20,.28) 0%,rgba(10,14,20,.12) 34%,rgba(10,14,20,.88) 78%,rgba(10,14,20,.97) 100%)}
+#vignette{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 42%,transparent 52%,rgba(5,7,10,.75) 100%)}
+#grain{position:absolute;inset:-50%;z-index:3;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(4) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-2%,1%)}50%{transform:translate(1%,-2%)}75%{transform:translate(-1%,-1%)}100%{transform:translate(0,0)}}
+
+/* --- HUD --- */
+header{position:relative;z-index:5;display:flex;align-items:center;gap:14px;
+  padding:calc(env(safe-area-inset-top) + 10px) 18px 8px;background:linear-gradient(180deg,rgba(6,9,13,.85),transparent)}
+#logo{font-size:17px;letter-spacing:.35em;color:var(--moon);white-space:nowrap}
+#logo b{color:var(--gold);font-weight:600}
+#clock{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);letter-spacing:.12em}
+#clock .t{color:var(--moon);font-variant-numeric:tabular-nums}
+.bat{width:44px;height:18px;border:1px solid var(--dim);border-radius:3px;position:relative;padding:2px}
+.bat::after{content:"";position:absolute;right:-5px;top:4px;width:3px;height:8px;background:var(--dim);border-radius:0 2px 2px 0}
+.bat i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#e8cf6b);transition:width .6s ease,background .6s}
+.bat.low i{background:linear-gradient(90deg,var(--blood),#c05555)}
+#menuBtns{display:flex;gap:8px}
+.iconbtn{background:none;border:1px solid var(--line);color:var(--dim);font-family:var(--serif);
+  font-size:13px;padding:5px 10px;border-radius:2px;cursor:pointer;letter-spacing:.1em;transition:.25s;white-space:nowrap}
+.iconbtn:hover{color:var(--moon);border-color:var(--gold)}
+
+/* --- chapter banner --- */
+#chapter{position:relative;z-index:5;flex:1;min-height:0;display:flex;flex-direction:column;max-width:820px;
+  width:100%;margin:0 auto;padding:6px 24px 0}
+#chTitle{text-align:center;font-size:13px;letter-spacing:.5em;color:var(--gold);opacity:0;
+  transition:opacity 1s;min-height:18px;padding-top:2px}
+#chTitle.show{opacity:.9}
+
+/* --- text panel --- */
+#stage{position:relative;z-index:5;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:10px 6px 8px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+  scroll-behavior:smooth;touch-action:pan-y}
+#stage::-webkit-scrollbar{width:4px}#stage::-webkit-scrollbar-thumb{background:var(--line)}
+#line{margin:0 auto;max-width:640px;padding:0 10px;
+  background:linear-gradient(180deg,rgba(8,11,16,.55),rgba(8,11,16,.35));border-radius:4px}
+.para{font-size:calc(17.5px * var(--fs));line-height:2.15;margin-bottom:16px;letter-spacing:.03em;color:var(--ink);
+  text-shadow:0 1px 12px rgba(5,8,12,.95),0 0 3px rgba(5,8,12,.9);
+  opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}
+.para.show{opacity:1;transform:none}
+.para.q{color:#d8c98a;font-size:calc(19.5px * var(--fs));text-align:center;letter-spacing:.08em}
+.para .g,.para span.g{color:#d8c98a}
+.para span.s{color:var(--dim)}
+.para.dlg{color:var(--moon)}
+.para small{color:var(--dim);font-size:calc(14.5px * var(--fs))}
+.cursor{display:inline-block;width:.55em;height:1.05em;background:var(--gold);margin-left:2px;
+  vertical-align:-.12em;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* --- choices --- */
+#choices{position:relative;z-index:5;max-width:680px;width:100%;margin:0 auto;padding:4px 24px calc(env(safe-area-inset-bottom) + 18px)}
+.choice{display:block;width:100%;text-align:left;background:var(--panel);backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  border:1px solid var(--line);border-left:3px solid transparent;color:var(--ink);
+  font-family:var(--serif);font-size:calc(16.5px * var(--fs));line-height:1.75;padding:14px 16px;margin-bottom:10px;
+  min-height:48px;
+  border-radius:2px;cursor:pointer;opacity:0;transform:translateY(10px);transition:.45s;letter-spacing:.02em}
+.choice.show{opacity:1;transform:none}
+.choice:hover{border-left-color:var(--gold);background:rgba(24,30,40,.85);padding-left:22px}
+.choice:active{background:rgba(201,162,39,.15);border-left-color:var(--gold)}
+.choice .note{display:block;font-size:13.5px;color:var(--dim);margin-top:4px;font-style:normal}
+.choice .hint{display:block;font-size:13.5px;color:#a4761f;margin-top:4px}
+.choice.locked{opacity:.4;cursor:not-allowed;border-color:rgba(120,120,120,.2)}
+.choice.locked:hover{padding-left:16px;border-left-color:transparent}
+.choice .lockmark{color:#6b7280;font-size:13px}
+
+/* --- toasts --- */
+#toasts{position:fixed;top:calc(env(safe-area-inset-top) + 58px);right:16px;z-index:50;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{background:rgba(14,18,26,.92);border:1px solid var(--line);border-right:3px solid var(--gold);
+  color:var(--ink);padding:8px 14px;font-size:13px;letter-spacing:.1em;border-radius:2px;
+  animation:tin .4s ease, tout .6s ease 2.8s forwards;max-width:70vw}
+.toast.bad{border-right-color:var(--blood)}
+@keyframes tin{from{opacity:0;transform:translateX(20px)}}
+@keyframes tout{to{opacity:0;transform:translateX(20px)}}
+
+/* --- modals --- */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(4,6,9,.86);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}
+.sheet{width:min(760px,96vw);max-height:86dvh;overflow-y:auto;background:#0d1219;
+  border:1px solid var(--line);padding:30px 30px 24px;position:relative}
+.sheet h2{font-size:15px;letter-spacing:.45em;color:var(--gold);font-weight:500;margin-bottom:18px;text-align:center}
+.sheet .close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px dashed rgba(201,162,39,.12);font-size:14px}
+.row span:first-child{color:var(--dim);letter-spacing:.1em}
+.pips{display:flex;gap:4px}
+.pip{width:12px;height:12px;border:1px solid var(--line);transform:rotate(45deg)}
+.pip.on{background:var(--gold);border-color:var(--gold)}
+.pip.bad{background:var(--blood);border-color:var(--blood)}
+.keygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.keycard{border:1px solid var(--line);padding:14px 12px;text-align:center;font-size:13px;color:var(--dim)}
+.keycard .crescent{width:44px;height:44px;margin:0 auto 8px;border-radius:50%;
+  background:radial-gradient(circle at 32% 38%, #e8d9a0, #8a6d1f 70%);
+  clip-path:polygon(100% 0,100% 100%,0 100%,0 0);position:relative}
+.keycard .crescent::after{content:"";position:absolute;inset:0;border-radius:50%;background:#0d1219;transform:translateX(-14px)}
+.keycard.got{color:var(--ink);border-color:var(--gold)}
+.keycard.got .num{color:var(--gold);font-size:15px}
+.endlist .row b{color:var(--moon);font-weight:500}
+.endlist .row .done{color:var(--gold)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.gcard{position:relative;border:1px solid var(--line);aspect-ratio:16/10;overflow:hidden;cursor:zoom-in;background:#0a0e14}
+.gcard img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .6s,transform .5s;transform:scale(1.02)}
+.gcard img.loaded{opacity:1}
+.gcard:hover img{transform:scale(1.08)}
+.gcard .cap{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;letter-spacing:.08em;color:var(--moon);
+  background:linear-gradient(transparent,rgba(6,9,13,.9));padding:14px 7px 5px;pointer-events:none}
+.gcard.locked{cursor:default}
+.gcard.locked::after{content:"？";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:26px;color:rgba(232,226,213,.14);background:#0a0e14}
+#lightbox{position:fixed;inset:0;z-index:80;background:rgba(3,5,8,.94);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px}
+#lightbox.open{display:flex}
+#lightbox img{max-width:96vw;max-height:78dvh;border:1px solid var(--line);object-fit:contain}
+#lightbox .cap{font-size:14px;color:var(--dim);letter-spacing:.2em}
+
+/* --- title screen --- */
+#titleScreen{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#05070a;transition:opacity 1.2s,visibility 1.2s}
+#titleScreen.hide{opacity:0;visibility:hidden;pointer-events:none}
+#titleScreen .bgart{position:absolute;inset:0;background:url('assets/img/webp/key_visual.webp') center/cover;opacity:.4;filter:saturate(.8)}
+#titleScreen::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,transparent 30%,#05070a 85%)}
+#titleScreen .inner{position:relative;z-index:2;text-align:center;padding:0 24px}
+#bigTitle{font-size:min(64px,14vw);letter-spacing:.28em;color:var(--moon);text-indent:.28em;
+  text-shadow:0 0 40px rgba(201,162,39,.25)}
+#bigSub{font-size:min(14px,3.6vw);letter-spacing:.9em;color:var(--gold);margin-top:14px;text-indent:.9em}
+#bigTag{font-size:12px;color:var(--dim);margin-top:26px;letter-spacing:.25em}
+.tbtn{display:block;margin:44px auto 0;min-width:230px;background:rgba(10,14,20,.55);border:1px solid var(--gold);
+  color:var(--moon);font-family:var(--serif);font-size:15px;letter-spacing:.5em;text-indent:.5em;
+  padding:13px 26px;cursor:pointer;transition:.3s}
+.tbtn:hover{background:var(--gold);color:#0a0e14}
+.tbtn.ghost{border-color:var(--line);color:var(--dim);margin-top:12px;font-size:13px}
+.tbtn.ghost:hover{background:rgba(201,162,39,.12);color:var(--moon)}
+#titleScreen .credit{position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:10px;color:#4a5261;letter-spacing:.2em;z-index:2}
+
+/* fade transition */
+#fade{position:fixed;inset:0;background:#05070a;z-index:35;opacity:0;pointer-events:none;transition:opacity .8s}
+#fade.on{opacity:1}
+
+/* death flash */
+@keyframes bloodflash{0%{box-shadow:inset 0 0 0 0 rgba(142,47,47,0)}20%{box-shadow:inset 0 0 220px 60px rgba(142,47,47,.7)}100%{box-shadow:inset 0 0 0 0 rgba(142,47,47,0)}}
+#app.death::after{content:"";position:absolute;inset:0;z-index:30;animation:bloodflash 1.6s ease}
+
+@media (max-width:640px){
+  .para{font-size:calc(17px * var(--fs));line-height:2.1;margin-bottom:14px}
+  .para.q{font-size:calc(18.5px * var(--fs))}
+  .para small{font-size:calc(14px * var(--fs))}
+  .choice{font-size:calc(16px * var(--fs));padding:13px 14px;line-height:1.8;margin-bottom:9px;min-height:52px}
+  .choice .note,.choice .hint{font-size:13px}
+  #logo{letter-spacing:.2em;font-size:14px;max-width:30vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  #logo b{margin:0 2px}
+  #clock{gap:5px;font-size:11px}
+  .bat{width:30px}
+  #menuBtns{gap:5px}
+  .iconbtn{padding:6px 7px;font-size:12px;letter-spacing:.05em}
+  #chapter{padding:4px 16px 0}
+  #choices{padding:2px 16px calc(env(safe-area-inset-bottom) + 14px)}
+  .sheet{padding:22px 18px 18px}
+  .row{font-size:15px;padding:11px 2px}
+  .toast{font-size:14px;padding:10px 14px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="art"><div class="slide" id="slideA"></div><div class="slide" id="slideB"></div></div>
+  <div id="vignette"></div><div id="grain"></div>
+
+  <header>
+    <div id="logo">十八分鐘<b>·</b>山月盤</div>
+    <div id="clock">
+      <span class="t" id="clockT">22:42</span>
+      <span>🔋</span><div class="bat"><i id="batFill" style="width:22%"></i></div>
+    </div>
+    <div id="menuBtns">
+      <button class="iconbtn" id="btnFont" title="文字大小">字</button>
+      <button class="iconbtn" id="btnSpeed" title="文字出現速度">速</button>
+      <button class="iconbtn" id="btnBook" title="月鑰·結局·插畫圖鑑">鑑</button>
+      <button class="iconbtn" id="btnSave" title="本週目狀態">档</button>
+      <button class="iconbtn" id="btnMenu" title="返回主頁">頁</button>
+    </div>
+  </header>
+
+  <div id="chapter"><div id="chTitle"></div></div>
+  <main id="stage"><div id="line"></div></main>
+  <nav id="choices"></nav>
+
+  <!-- title -->
+  <div id="titleScreen">
+    <div class="bgart"></div>
+    <div class="inner">
+      <div id="bigTitle">十八分鐘</div>
+      <div id="bigSub">EIGHTEEN MINUTES · 山月盤</div>
+      <div id="bigTag">互動小說 · 七把月鑰 · 八種結局</div>
+      <button class="tbtn" id="btnNew">開始新遊戲</button>
+      <button class="tbtn ghost" id="btnCont" style="display:none">繼續上次</button>
+      <button class="tbtn ghost" id="btnIntro">關於本作</button>
+    </div>
+    <div class="credit">改編自小說《十八分鐘》 · 概念插畫由 alibaba cloud wan2.7-image 生成</div>
+  </div>
+
+  <div id="fade"></div>
+  <div id="toasts"></div>
+</div>
+
+<!-- codex modal -->
+<div class="modal" id="mBook"><div class="sheet">
+  <button class="close" data-close>×</button>
+  <h2>月 鑰 圖 鑑</h2>
+  <div class="keygrid" id="keyGrid"></div>
+  <h2 style="margin-top:26px">結 局 圖 鑑</h2>
+  <div class="endlist" id="endList"></div>
+  <h2 style="margin-top:26px">插 畫 廊</h2>
+  <div style="text-align:center;font-size:12px;color:var(--dim);margin-bottom:12px;letter-spacing:.15em" id="galCount"></div>
+  <div class="gallery" id="gallery"></div>
+</div></div>
+
+<!-- stats modal -->
+<div class="modal" id="mStats"><div class="sheet">
+  <button class="close" data-close>×</button>
+  <h2>本 週 目 狀 態</h2>
+  <div id="statRows"></div>
+  <div class="row"><span>手機電量</span><span id="sBat"></span></div>
+  <div class="row"><span>時間錨點</span><span>22:42:——</span></div>
+  <div class="row"><span>第幾次</span><span id="sRound"></span></div>
+</div></div>
+
+<!-- ending modal -->
+<div class="modal" id="mEnd"><div class="sheet" style="text-align:center">
+  <h2 id="endTitle"></h2>
+  <div id="endArt" style="margin:0 auto 16px;max-width:520px;border:1px solid var(--line)">
+    <img id="endImg" style="width:100%;display:block">
+  </div>
+  <div id="endText" style="text-align:left;max-width:520px;margin:0 auto"></div>
+  <div style="margin-top:22px">
+    <button class="tbtn" id="btnAgain" style="margin-top:0">重 新 開 始</button>
+    <button class="tbtn ghost" id="btnLoadLast">讀取自動存檔</button>
+  </div>
+</div></div>
+
+<!-- about -->
+<div id="lightbox"><img id="lbImg" alt=""><div class="cap" id="lbCap"></div></div>
+<div class="modal" id="mAbout"><div class="sheet">
+  <button class="close" data-close>×</button>
+  <h2>關 於 本 作</h2>
+  <p style="font-size:13.5px;line-height:2;color:var(--dim)">
+  《十八分鐘 · 山月盤》改編自同名小說（約5.3萬字，11章）。一個剛考完DSE的香港少年，在大理後巷洗手間裏多停留了一秒，墮入1450年的大理府——那裏有一個和他長得一模一樣的屍體、一個會說粵語的古人、一塊會照出未選擇人生的銅鏡。<br><br>
+  · 88 個場景、60+ 抉擇、8 種結局（含 1 個隱藏結局）<br>
+  · 你的每個選擇都會改變「後悔」——而鏡子，最喜歡想回家的人<br>
+  · 概念插畫由阿里雲百煉 <b style="color:var(--gold)">Wan2.7-Image</b> 生成<br>
+  · 進度自動保存於瀏覽器本地<br><br>
+  <span style="letter-spacing:.2em">「后悔不是錯誤。是它讓我知道，下一次應該怎樣選擇。」</span></p>
+</div></div>
+
+<script src="story.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const FAST=new URLSearchParams(location.search).has('fast');
+const DATA=window.GAME_DATA;
+const SCENES=DATA.scenes, ENDINGS=DATA.endings;
+const SAVE_KEY='shiyue_save_v1', META_KEY='shiyue_meta_v1';
+
+const DEFAULT_STATE=()=>({
+  scene:'title_hint',
+  stats:{courage:0,wisdom:0,human:0,regret:0,trustA:0,suspA:0},
+  flags:{}, inv:{rose:0,phone:1,idcard:0,key1:0}, battery:22,
+  history:[], seenArt:{}
+});
+let st=DEFAULT_STATE();
+let meta=loadMeta();
+
+function loadMeta(){try{return JSON.parse(localStorage.getItem(META_KEY))||{endings:{},rounds:0,keys:{},seenArt:{}}}catch(e){return {endings:{},rounds:0,keys:{},seenArt:{}}}}
+if(!meta.seenArt)meta.seenArt={};
+function saveMeta(){localStorage.setItem(META_KEY,JSON.stringify(meta))}
+
+// ---------- helpers ----------
+function artOf(id){const sc=SCENES[id];return sc&&sc.art||sc&&sc.bg||null}
+function applySlide(key){
+  if(!key)return;
+  meta.seenArt[key]=1; saveMeta();
+  const url=`assets/img/webp/${key}.webp`;
+  const cur=$('#art .on'); const next=cur===$('#slideA')?$('#slideB'):$('#slideA');
+  if(cur && cur.dataset.k===key)return;
+  next.style.backgroundImage=`url('${url}')`; next.dataset.k=key;
+  next.classList.add('on'); if(cur)cur.classList.remove('on');
+}
+function fmtReq(req){
+  if(!req)return'';
+  if(req.flag){const names={planner:'「把人生列成表格」的習慣',blackbelt:'跆拳道黑帶的過去',turtle:'海邊合照的烏龜',saved_ayue:'救過阿月',stared:'敢直視鏡子',got_call:'接過那通電話',named:'喊過自己的名字',zero_paper:'交過白卷',mom_msg:'回覆過母親'};return '需要：'+(names[req.flag]||req.flag)}
+  if(req.inv)return '需要物品：'+(req.inv==='phone'?'手機（電量>0）':req.inv);
+  if(req.stat){const k=Object.keys(req.stat)[0];return `需要 ${lbl(k)} 達到門檻`}
+  return'';
+}
+function lbl(k){return({courage:'勇氣',wisdom:'智慧',human:'人性',regret:'後悔',trustA:'羈絆',suspA:'警覺'})[k]||k}
+function checkReq(req){
+  if(!req)return true;
+  if(req.flag&&!st.flags[req.flag])return false;
+  if(req.inv==='phone'&&!(st.inv.phone&&st.battery>0))return false;
+  if(req.inv&&req.inv!=='phone'&&!(st.inv[req.inv]||st.flags['inv_'+req.inv]))return false;
+  if(req.stat){for(const k in req.stat){const cmp=req.stat[k];
+    const m=cmp.match(/^(>=|<=|>|<)(-?\d+)$/);
+    if(m){const v=st.stats[k]||0,n=+m[2];
+      if(m[1]==='>='&&!(v>=n))return false; if(m[1]==='<='&&!(v<=n))return false;
+      if(m[1]==='>'&&!(v>n))return false; if(m[1]==='<'&&!(v<n))return false;}}}
+  return true;
+}
+function toast(msg,bad){const t=document.createElement('div');t.className='toast'+(bad?' bad':'');t.textContent=msg;
+  $('#toasts').appendChild(t);setTimeout(()=>t.remove(),3500)}
+// text speed: cpm = ms per char (bigger = slower); pause = ms between paragraphs
+const SPDS={
+  x1:{cpm:140,pause:1400,label:'字‧極慢'},   // very slow, atmospheric
+  x2:{cpm:60, pause:700, label:'字‧慢'},      // slow
+  x3:{cpm:30, pause:380, label:'字‧中'},
+  x4:{cpm:0,  pause:0,   label:'字‧即放'},     // instant
+};
+const SPD_ORDER=['x2','x3','x4','x1'], SPD_KEY='***';
+function spd(){if(FAST)return SPDS.x4;return SPDS[localStorage.getItem(SPD_KEY)||SPD_ORDER[0]]}
+function applySpd(){const k=localStorage.getItem(SPD_KEY)||SPD_ORDER[0];
+  const b=$('#btnSpeed');b.title=SPDS[k].label+'（撳一下切換）';
+  b.style.borderColor=k==='x4'?'transparent':(k==='x1'?'var(--gold)':'var(--line)');
+  $('#btnFont').textContent='字';}
+$('#btnSpeed').onclick=()=>{const cur=localStorage.getItem(SPD_KEY)||SPD_ORDER[0];
+  const nxt=SPD_ORDER[(SPD_ORDER.indexOf(cur)+1)%SPD_ORDER.length];
+  localStorage.setItem(SPD_KEY,nxt);applySpd();render()};
+applySpd();
+function applyFx(fx){
+  if(!fx)return;
+  if(fx.flags)for(const f in fx.flags){
+    const was=!st.flags[f]; st.flags[f]=1;
+    if(was&&FLAG_NAMES[f])toast(FLAG_NAMES[f]);
+  }
+  if(fx.inv)for(const i in fx.inv){st.inv[i]=(st.inv[i]||0)+fx.inv[i]}
+  for(const k of['courage','wisdom','human','regret','trustA','suspA']){
+    if(fx[k]){st.stats[k]=(st.stats[k]||0)+fx[k];
+      if(fx[k]>0&&k!=='regret')toast(`${lbl(k)} +${fx[k]}`);
+      if(fx[k]<0&&k==='regret')toast(`後悔 −${-fx[k]}（鏡子皺了皺眉）`);
+      if(fx[k]>0&&k==='regret')toast(`後悔 +${fx[k]}（鏡子很滿意）`,true);}
+  }
+  if(fx.batt!==undefined){st.battery=Math.max(0,Math.min(100,st.battery+fx.batt));}
+  // natural drain per scene handled in goto
+}
+const FLAG_NAMES={
+  saved_ayue:'🔑 羈絆確立：你回的火場', gave_home_1:'「第一次放棄回家的機會」',
+  gave_home_2:'「第二次放棄回家的機會」——有資格讀那封信了',
+  has_id:'收下了：另一張身份證', hid_warning:'你瞞下了「晏歸遲」三個字',
+  zero_paper:'📄 成就：交白卷', named:'🗣 成就：說出自己的名字',
+  accept_shadow:'🤝 成就：擁抱後悔', ayue_real:'阿月不是假的',
+  buchi:'获得：不遲', left_ayue:'你走了。和前面六次一樣',
+};
+
+// ---------- flow ----------
+function goto(id,silentHistory){
+  if(!SCENES[id]){console.error('missing scene',id);return}
+  // battery drain 1 per 3 scenes
+  st.battery=Math.max(0,st.battery-0.4);
+  st.scene=id;
+  if(!silentHistory)st.history.push(id);
+  autosave();
+  render();
+}
+function render(){
+  render._gen=(render._gen||0)+1;const gen=render._gen;
+  const sc=SCENES[st.scene];
+  $('#clockT').textContent='22:42';
+  const bf=$('#batFill');bf.style.width=Math.max(2,st.battery)+'%';
+  bf.parentElement.classList.toggle('low',st.battery<=10);
+  applySlide(sc.art||sc.bg);
+  const ct=$('#chTitle');
+  ct.textContent=sc.title||''; ct.classList.toggle('show',!!sc.title);
+  const line=$('#line');line.innerHTML='';
+  const wrap=$('#choices');wrap.innerHTML='';
+  const paras=sc.text||[];
+  render._skip=false;
+  // ---- typewriter ----
+  function htmlOf(txt){
+    return txt.replace(/「(.*?)」/g,'<span class="g">「$1」</span>')
+              .replace(/（(.*?)）/g,'<small>（$1）</small>');
+  }
+  function clsOf(txt){return (txt.startsWith('「')?' para dlg':' para')+(txt.startsWith('（')&&txt.endsWith('）')?' q':'')}
+  function dumpAll(from){
+    for(let j=from;j<paras.length;j++){
+      const p=document.createElement('p');p.className=clsOf(paras[j]).trim();p.classList.add('show');
+      p.innerHTML=htmlOf(paras[j]);line.appendChild(p)}
+    autoScroll();showChoices();
+  }
+  function autoScroll(){const s=$('#stage');s.scrollTop=s.scrollHeight}
+  let i=0;
+  function nextPara(){
+    if(gen!==render._gen)return;
+    if(render._skip)return dumpAll(i);
+    if(i>=paras.length){showChoices();return}
+    const raw=paras[i++];
+    const p=document.createElement('p');p.className=clsOf(raw).trim();
+    line.appendChild(p);
+    requestAnimationFrame(()=>{p.classList.add('show');autoScroll()});
+    const segs=[];const re=/「[^」]*」|（[^）]*）/g;let last=0,mm;
+    while((mm=re.exec(raw))){
+      if(mm.index>last)segs.push({t:raw.slice(last,mm.index),c:''});
+      segs.push({t:mm[0],c:mm[0][0]==='「'?'g':'s'});last=re.lastIndex;
+    }
+    if(last<raw.length)segs.push({t:raw.slice(last),c:''});
+    const span=document.createElement('span');const caret=document.createElement('span');caret.className='cursor';
+    p.appendChild(span);p.appendChild(caret);
+    const S=spd();
+    if(!S.cpm){p.remove();dumpAll(i-1);return}
+    let si=0,ci=0;
+    function tick(){
+      if(gen!==render._gen)return;
+      if(render._skip){caret.remove();span.innerHTML=htmlOf(raw);dumpAll(i);return}
+      if(si>=segs.length){caret.remove();autoScroll();setTimeout(nextPara,S.pause);return}
+      const seg=segs[si];
+      if(!seg._el){seg._el=document.createElement('span');if(seg.c)seg._el.className=seg.c;span.appendChild(seg._el)}
+      const ch=seg.t[ci++];seg._el.textContent+=ch;
+      let d=S.cpm;
+      if('，。！？；：—、…'.includes(ch))d+=S.cpm*4;
+      else if('「（'.includes(ch))d+=S.cpm;
+      else if('」）'.includes(ch))d+=S.cpm*2;
+      if(ci>=seg.t.length){si++;ci=0}
+      if(si<segs.length&&!segs[si]._el)autoScroll();
+      setTimeout(tick,d);
+    }
+    tick();
+  }
+  function showChoices(){
+    if(gen!==render._gen)return;
+    (sc.choices||[]).forEach((c,idx)=>{
+      const b=document.createElement('button');b.className='choice';
+      const ok=checkReq(c.req);
+      const lockLabel=ok?'':`<span class="lockmark">🔒 ${fmtReq(c.req)}</span>`;
+      b.innerHTML=`${c.t}${c.note?`<span class="note">${c.note}</span>`:''}${c.hint&&!ok?`<span class="hint">${c.hint}</span>`:''}${!ok?lockLabel:''}`;
+      if(!ok){b.classList.add('locked');b.title='這個選擇還不屬於你';}
+      else b.onclick=()=>pick(c);
+      wrap.appendChild(b);
+      setTimeout(()=>b.classList.add('show'),FAST?0:80*idx+60);
+    });
+    autoScroll();
+  }
+  nextPara();
+}
+$('#stage').onclick=()=>{render._skip=true};
+function pick(c){
+  applyFx(c.fx);
+  if(c.end){return showEnding(c.end)}
+  if(c.go){
+    // battery ending check
+    if(st.battery<=0&&c.go!=='epilogue'){return showEnding(st.flags.named?'E0':'E0')}
+    fadeThen(()=>goto(c.go));
+  }
+}
+function fadeThen(fn){if(FAST)return fn();const f=$('#fade');f.classList.add('on');setTimeout(()=>{fn();f.classList.remove('on')},450)}
+function showEnding(id){
+  const e=ENDINGS[id];if(!e)return;
+  meta.endings[id]=(meta.endings[id]||0)+1;meta.rounds++;saveMeta();
+  applySlide(e.art);
+  $('#app').classList.add('death');setTimeout(()=>$('#app').classList.remove('death'),1700);
+  $('#endTitle').textContent=e.title;
+  $('#endImg').src=`assets/img/webp/${e.art||'key_visual'}.webp`;
+  const box=$('#endText');box.innerHTML='';
+  e.text.forEach((t,i)=>{const p=document.createElement('p');p.className='para';
+    p.innerHTML=t.replace(/「(.*?)」/g,'<span style="color:#d8c98a">「$1」</span>');
+    box.appendChild(p);setTimeout(()=>p.classList.add('show'),300*i)});
+  const cnt=Object.keys(meta.endings).length;
+  setTimeout(()=>$('#mEnd').classList.add('open'),600);
+  localStorage.removeItem(SAVE_KEY);
+}
+
+// ---------- save ----------
+function autosave(){localStorage.setItem(SAVE_KEY,JSON.stringify(st))}
+function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&SCENES[s.scene])return s}catch(e){}return null}
+
+// ---------- codex ----------
+const KEYS=['第一把 · 開始（港大畢袍）','第二把 · 黑帶','第三把 · 戒指（流血的鏡中新娘）','第四把 · 蠟筆畫','第五把 · 2047報章','第六把 · 染血外套','第七把 → 第八把 · 你自己'];
+function renderBook(){
+  const g=$('#keyGrid');g.innerHTML='';
+  KEYS.forEach((k,i)=>{const n=i+1;
+    const got=!!(meta.keys[n]||st.flags['key_'+n]);
+    const d=document.createElement('div');d.className='keycard'+(got?' got':'');
+    d.innerHTML=`<div class="crescent"></div><div class="num">${got?n:'？'}</div>${got?k:'尚未取得'}`;
+    g.appendChild(d)});
+  const el=$('#endList');el.innerHTML='';
+  Object.keys(ENDINGS).forEach(id=>{const e=ENDINGS[id];const got=meta.endings[id];
+    const d=document.createElement('div');d.className='row';
+    d.innerHTML=`<span>${got?e.title:'？未解鎖？'}</span><span class="done">${got?('×'+got):''}</span>`;
+    el.appendChild(d)});
+  const total=Object.keys(ENDINGS).length,had=Object.keys(meta.endings).length;
+  const d=document.createElement('div');d.className='row';
+  d.innerHTML=`<span>結局收集</span><span>${had}/${total}</span>`;el.appendChild(d);
+}
+function renderStats(){
+  const r=$('#statRows');r.innerHTML='';
+  for(const k in st.stats){
+    const v=st.stats[k];
+    const d=document.createElement('div');d.className='row';
+    let pips='';const max=Math.max(6,Math.abs(v));
+    for(let i=0;i<6;i++)pips+=`<div class="pip ${i<Math.abs(v)?(k==='regret'?'bad on':'on'):''}"></div>`;
+    d.innerHTML=`<span>${lbl(k)}</span><div class="pips">${pips}</div><span>${v}</span>`;
+    r.appendChild(d)}
+  $('#sBat').textContent=Math.round(st.battery)+'%';
+  $('#sRound').textContent='第 '+(meta.rounds+1)+' 個楊小天';
+}
+
+// ---------- gallery ----------
+const ART_TITLES={
+street_modern:'步行街·正面',reception:'櫃檯·黑白照片',item_photo_bw:'七個不Look鏡頭嘅人',room_window:'七號房·梅樹敲窗',
+ch06_market_night:'古城夜市',girl_rose:'「因為沒有人買給你」',back_alley:'巷之背面',washroom_mirror:'鏡中土牆',
+old_town_gate:'一步之隔·1450',horse_lanterns:'馬蹄與火把',knife_offer:'「交出來」',phone_flash:'手電筒·妖術',
+mud_escape:'泥地逃亡',ayue_pov_roof:'屋頂上的繩索',rooftop_leap:'兩米之跳',dye_vats:'染坊暗道',
+cellar_lamp:'地窖·六張臉',lantern_face:'油燈下的對質',dark_voice:'暗道盡頭的聲音',lighter:'十五世紀的打火機',
+cellar_three:'三人·冷茶·刀',ear_on_ground:'貼地聽風',smoke_flask:'過期一百零六年',dead_plum:'枯梅·沐山驛',
+hospital_2056:'2056·維港之上',missed_calls:'十七通未接來電',under_bed:'床底的六隻手',dusty_room:'蒙塵七號房',
+mirror_frame:'七個半月凹槽',ringing_phone:'無信號來電',bridal_face:'鏡中的新娘',key_press:'按回去的血',
+red_knot:'紅線結·鎖與門',fire_arrows:'赤紅的鳥群',falling_beam:'第七次·同一根樑',descend_ashes:'灰烬中墜入',
+lever_beam:'支點與角度',bronze_door:'沒有鎖的門',knife_throat_door:'刀架頸前·門隔兩世',powder_cloud:'白色「毒煙」',
+severed_pinky:'斷在門縫的小指',neon_street:'1450穿過2026',moon_gate_plaque:'梅樹下的鐵盒',letter_moon:'十二年前的信',
+twelve_graves:'相隔576年的兩座墳',window_key7:'「只要你上來拿」',shadow_hand:'會爬行的影子',
+knife_neck:'刀抵守門人的咽喉',mirror_shards:'千鏡碎裂·六界顯影',stone_stair:'通往蒼山的門',
+yanguichi:'晏歸遲·無影之人',six_lie:'六具睜眼的屍體',chest_hollow:'胸口沒有心臟',void_gaze:'絕對黑暗的凝視',
+thrown_knife:'擲向山月盤的刀',six_eyes:'十二隻眼睛一起望向你',
+empty_chairs:'空椅子的禮堂',blood_writing:'血寫的反字',barcode:'第七張條碼',fire_alarm:'火警·交白卷',
+mirror_crack:'兩界同砸的一面鏡',pod_lab:'山月核·眾艙',mother_eyes:'「返嚟食飯未」',faint_shadow:'沒有身體的影子',
+scalpel:'把名字割下來',city_erase:'城市被逐塊擦去',core_rise:'黑石升起·心跳',six_glow:'六具屍體的光',
+coach_black:'欠孩子的最後一堂課',four_farewells:'四個道別',six_leave:'六道歸門的光',shadow_arms:'百臂之暗',
+embrace_shadow:'抱住後悔',two_doors:'兩道門·兩個時代',torn_sleeve:'半截衣袖·一句「不遲」',
+ending_buchi:'梅開·門內門外',stone_tablet:'沐山驛記·最後一行',key_eight_art:'第八把鑰匙',
+shanmoon_core:'山月盤·星辰點亮',burning_inn:'火燒沐山驛',blood_mirror:'第三把鑰匙在流血',exam_hall:'最後一科',
+alley_riders:'五騎封巷',yangxiaotian:'楊小天·18歲',duanyue:'段阿月',duan_yunsheng:'段雲生·羅錚',
+key_visual:'主視覺·半月之門',cover:'封面',
+ch01_alley_day:'旅拍街·一巷之隔',ch02_gate:'沐山月·門前燈',ch03_plum_night:'梅枝敲窗',ch04_mountain_road:'窗外的山不急',
+ch05_stars_cang:'蒼山之下·山月核墜處',ch07_taekwondo:'道館玻璃門上的舊照片',ch08_sea_bbq:'海邊合照·空位上的烏龜',
+ch09_construction:'街的背面·鋼筋肋骨',ch10_ming_town:'景泰元年·清晨大理',ch11_thunder:'倒懸的鏡月·裂開的夜空',
+town_search:'火把之網',inn_front:'沐山月·2026',grand_hall:'沐山驛大殿',corridor_doors:'走廊盡頭的教室',
+void_side:'墜入選擇之海',keyhole_chest:'胸口的鑰匙孔',dawn_dali:'黎明·古城',sea_sea:'「比妳說的還要大」',
+mirror_room_girl:'櫃檯後的女孩',night_night:'俯瞰·唯一錯色',boy_prayer:'銅鏡前的倒數',gate_locked:'十一點·上鎖',
+token_crescent:'道具·半月牌',item_idcard:'道具·另一張身份證',item_phone_dead:'道具·1%手機',
+item_old_phone:'道具·2014舊手機',item_blackbelt:'道具·黑帶',item_ring:'道具·婚戒',item_crayon:'道具·蠟筆畫',
+item_newspaper:'道具·2047報章',item_extinguisher:'道具·滅火器',item_lighter:'道具·打火機',item_letter:'道具·信',
+item_knife:'道具·短刀',item_broom_ticket:'道具·八達通',item_bone_flute:'道具·七弦',
+ayue_rope:'屋頂拋下的繩',bw_photo:'那張七人黑白照',key_eight:'第八把鑰匙',two_keys:'一與七·合成圓月'
+};
+const STORY_ARTS=new Set(Object.values(SCENES).flatMap(s=>[s.art,s.bg].filter(Boolean))
+  .concat(Object.values(ENDINGS).map(e=>e.art).filter(Boolean)));
+const ALL_ARTS=[...STORY_ARTS];
+const EXTRA_ARTS=Object.keys(ART_TITLES).filter(a=>!STORY_ARTS.has(a)&&!a.endsWith('2')&&a!=='');
+function renderGallery(){
+  const g=$('#gallery');g.innerHTML='';
+  let unlocked=0;
+  ALL_ARTS.forEach(a=>{
+    const seen=!!meta.seenArt[a]; if(seen)unlocked++;
+    const d=document.createElement('div');d.className='gcard'+(seen?'':' locked');
+    if(seen){
+      const im=document.createElement('img');im.loading='lazy';im.alt=a;
+      im.src=`assets/img/webp/${a}.webp`;
+      im.onload=()=>im.classList.add('loaded');
+      d.appendChild(im);
+      const cap=document.createElement('div');cap.className='cap';cap.textContent=ART_TITLES[a]||a;
+      d.appendChild(cap);
+      d.onclick=()=>{$('#lbImg').src=im.src;$('#lbCap').textContent=ART_TITLES[a]||a;$('#lightbox').classList.add('open')};
+    }
+    g.appendChild(d)});
+  const nEnd=Object.keys(meta.endings).length;
+  EXTRA_ARTS.forEach((a,i)=>{
+    const seen=i< (nEnd-1)*6;   // 每多解鎖一個結局，放出6張設定集
+    const d=document.createElement('div');d.className='gcard'+(seen?'':' locked');
+    if(seen){
+      const im=document.createElement('img');im.loading='lazy';im.alt=a;
+      im.src=`assets/img/webp/${a}.webp`;
+      im.onload=()=>im.classList.add('loaded');
+      d.appendChild(im);
+      const cap=document.createElement('div');cap.className='cap';cap.textContent=(ART_TITLES[a]||a)+'【設定集】';
+      d.appendChild(cap);
+      d.onclick=()=>{$('#lbImg').src=im.src;$('#lbCap').textContent=ART_TITLES[a]||a;$('#lightbox').classList.add('open')};
+    }
+    g.appendChild(d)});
+  const total=ALL_ARTS.length+EXTRA_ARTS.length;
+  $('#galCount').textContent=`已解鎖 ${unlocked+Math.min(EXTRA_ARTS.length,Math.max(0,(nEnd-1)*6))} / ${total} 張插畫（剧情收藏 + 結局設定集，每解鎖1個結局放出6張）`;
+}
+$('#lightbox').onclick=()=>$('#lightbox').classList.remove('open');
+
+// ---------- font size ----------
+const FS_STEPS=[1,1.12,1.25,1.4], FS_KEY='shiyue_fs';
+function applyFs(){const i=+(localStorage.getItem(FS_KEY)||0);
+  document.documentElement.style.setProperty('--fs',FS_STEPS[i]);
+  $('#btnFont').title=['字體：標準','字體：大','字體：特大','字體：最大'][i]+'（撳一下切換）';
+  $('#btnFont').style.borderColor=i>0?'var(--gold)':'var(--line)'}
+$('#btnFont').onclick=()=>{const i=((+(localStorage.getItem(FS_KEY)||0))+1)%FS_STEPS.length;
+  localStorage.setItem(FS_KEY,i);applyFs()};
+applyFs();
+
+// ---------- boot ----------
+$('#btnNew').onclick=()=>{st=DEFAULT_STATE();meta.keys={};fadeThen(()=>{$('#titleScreen').classList.add('hide');goto('title_hint',true)})};
+const saved=loadSave();
+if(saved){$('#btnCont').style.display='block';
+  $('#btnCont').onclick=()=>{st=saved;fadeThen(()=>{$('#titleScreen').classList.add('hide');render()})}}
+$('#btnIntro').onclick=()=>$('#mAbout').classList.add('open');
+$('#btnBook').onclick=()=>{renderBook();renderGallery();$('#mBook').classList.add('open')};
+$('#btnSave').onclick=()=>{renderStats();$('#mStats').classList.add('open')};
+$('#btnMenu').onclick=()=>$('#titleScreen').classList.remove('hide');
+$('#btnAgain').onclick=()=>{$('#mEnd').classList.remove('open');st=DEFAULT_STATE();meta.keys={};fadeThen(()=>{$('#titleScreen').classList.add('hide');goto('title_hint',true)})};
+$('#btnLoadLast').onclick=()=>{const s=loadSave();$('#mEnd').classList.remove('open');if(s){st=s;render()}else toast('沒有存檔——它被鏡子吃掉了')};
+document.querySelectorAll('.modal .close').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('open'));
+document.querySelectorAll('.modal').forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove('open')});
+// key reveal: mark keys obtained by flags
+function syncKeys(){const map={1:'took_key1',2:'q_done',3:'blood_key',4:'k4',5:'k5',6:'k6',7:'saved_ayue',8:'named'};
+  for(const n in map){if(st.flags[map[n]]||['mirror_keys','q_coach','key_eight'].some(s=>st.history.includes(s)))meta.keys[n]=1}}
+const _goto=goto;goto=(id,s)=>{_goto(id,s);syncKeys();saveMeta()};
+</script>
+</body>
+</html>
