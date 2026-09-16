@@ -493,7 +493,7 @@ function showEnding(id){
     box.appendChild(p);setTimeout(()=>p.classList.add('show'),300*i)});
   const cnt=Object.keys(meta.endings).length;
   setTimeout(()=>$('#mEnd').classList.add('open'),600);
-  localStorage.removeItem(SAVE_KEY);
+  // 保留自動存檔：玩家可在結局頁「讀取自動存檔」回到死亡前一刻重揀
 }
 
 // ---------- save ----------
